@@ -8,7 +8,7 @@ import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 contract ZkAmmPair is IZkAmmPair, ERC20 {
     address public immutable token0;
     address public immutable token1;
-    address public immutable zkGraph;
+    address public zkGraph;
 
     uint public reserve0;
     uint public reserve1;
@@ -18,10 +18,14 @@ contract ZkAmmPair is IZkAmmPair, ERC20 {
         _;
     }
     
-    constructor(address tokenA, address tokenB, address zkGraph_) ERC20("ZK AMM", "ZK-AMM") {
+    constructor(address tokenA, address tokenB) ERC20("ZK AMM", "ZK-AMM") {
         require(tokenA != tokenB, 'IDENTICAL_ADDRESSES');
         (token0, token1) = tokenA < tokenB ? (tokenA, tokenB) : (tokenB, tokenA);
-        zkGraph = zkGraph_;
+    }
+
+    function setGraph(address graph) external override {
+        require(graph != address(0), "zero address");
+        zkGraph = graph;
     }
 
     function addInitLiquidity(

@@ -1,22 +1,49 @@
 import { ethers } from "hardhat";
 
 async function main() {
-  const currentTimestampInSeconds = Math.round(Date.now() / 1000);
-  const unlockTime = currentTimestampInSeconds + 60;
+  const verifyStr = "npx hardhat verify --network";
 
-  const lockedAmount = ethers.parseEther("0.001");
+  const MockToken = await ethers.getContractFactory("MockToken");
 
-  const lock = await ethers.deployContract("Lock", [unlockTime], {
-    value: lockedAmount,
-  });
-
-  await lock.waitForDeployment();
-
+  const tokenA = await MockToken.deploy("MockWBTC", "WBTC");
+  const addressTokenA = await tokenA.getAddress();
+  console.log("TokenA", addressTokenA);
   console.log(
-    `Lock with ${ethers.formatEther(
-      lockedAmount
-    )}ETH and unlock timestamp ${unlockTime} deployed to ${lock.target}`
+    verifyStr,
+    process.env.HARDHAT_NETWORK,
+    addressTokenA,
+    "MockWBTC",
+    "WBTC"
   );
+
+  const tokenB = await MockToken.deploy("MockWETH", "WETH");
+  const addressTokenB = await tokenB.getAddress();
+  console.log("TokenB", addressTokenB);
+  console.log(
+    verifyStr,
+    process.env.HARDHAT_NETWORK,
+    addressTokenB,
+    "MockWETH",
+    "WETH"
+  );
+
+  const ZkAmmPair = await ethers.getContractFactory("ZkAmmPair");
+  const pair = await ZkAmmPair.deploy(addressTokenA, addressTokenB);
+  const pairAddress = await pair.getAddress();
+  console.log("ZkAmmPair", pairAddress);
+  console.log(
+    verifyStr,
+    process.env.HARDHAT_NETWORK,
+    pairAddress,
+    addressTokenA,
+    addressTokenB
+  );
+
+  // set zkGraph
+  // const zkGraph = "";
+  // const pairAddress = ""
+  // const pair = await ethers.getContractAt("ZkAmmPair", pairAddress);
+  // await pair.setGraph(zkGraph);
 }
 
 // We recommend this pattern to be able to use async/await everywhere

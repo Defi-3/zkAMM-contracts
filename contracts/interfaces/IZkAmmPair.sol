@@ -16,6 +16,8 @@ interface IZkAmmPair {
     function reserve0() external view returns (uint);
     function reserve1() external view returns (uint);
 
+    function setGraph(address graph) external;
+
     function addInitLiquidity(
         address recipient, 
         uint amount0, 
