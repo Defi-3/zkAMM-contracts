@@ -21,6 +21,7 @@ contract ZkAmmPair is IZkAmmPair, ERC20 {
     constructor(address tokenA, address tokenB) ERC20("ZK AMM", "ZK-AMM") {
         require(tokenA != tokenB, 'IDENTICAL_ADDRESSES');
         (token0, token1) = tokenA < tokenB ? (tokenA, tokenB) : (tokenB, tokenA);
+        emit Setup(token0, token1);
     }
 
     function setGraph(address graph) external override {

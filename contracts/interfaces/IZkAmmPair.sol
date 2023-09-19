@@ -2,12 +2,41 @@
 pragma solidity ^0.8.10;
 
 interface IZkAmmPair {
-    event AddInitLiquidity(address payer, address recipient, uint amount0, uint amount1);
-    event AddLiquidity(address payer, address recipient, uint amount0, uint reserve0, uint reserve1, uint totalSupply);
+    event Setup(address token0, address token1);
+    event AddInitLiquidity(
+        address payer, 
+        address recipient, 
+        uint256 amount0, 
+        uint256 amount1
+    );
+    event AddLiquidity(
+        address payer, 
+        address recipient, 
+        uint256 amount0, 
+        uint256 reserve0, 
+        uint256 reserve1, 
+        uint256 totalSupply
+    );
+
+    event RemoveLiquidity(
+        address sender, 
+        address recipient, 
+        uint256 liquidity, 
+        uint256 reserve0, 
+        uint256 reserve1, 
+        uint256 totalSupply
+    );
+    event Swap(
+        address payer, 
+        address recipient, 
+        bool zeroForOne, 
+        uint256 amountIn, 
+        uint256 reserve0, 
+        uint256 reserve1
+    );
+
     event LiquidityAdded(address payer, address recipient, uint amount0, uint amount1, uint liquidity);
-    event RemoveLiquidity(address sender, address recipient, uint liquidity, uint reserve0, uint reserve1, uint totalSupply);
     event LiquidityRemoved(address sender, address recipient, uint liquidity, uint amount0, uint amount1);
-    event Swap(address payer, address recipient, bool zeroForOne, uint amountIn, uint reserve0, uint reserve1);
     event Swapped(address payer, address recipient, bool zeroForOne, uint amountIn, uint amountOut);
 
     function token0() external view returns (address);
@@ -23,6 +52,7 @@ interface IZkAmmPair {
         uint amount0, 
         uint amount1
     ) external;
+
     function addInitLiquidityCallback(
         address payer,
         address recipient,
@@ -32,6 +62,7 @@ interface IZkAmmPair {
     ) external;
 
     function addLiquidity(address recipient, uint amount0) external;
+
     function addLiquidityCallback(
         address payer,
         address recipient,
@@ -41,6 +72,7 @@ interface IZkAmmPair {
     ) external;
 
     function removeLiquidity(address recipient, uint liquidity) external;
+
     function removeLiquidityCallback(
         address sender,
         address recipient,
@@ -50,6 +82,7 @@ interface IZkAmmPair {
     ) external;
 
     function swap(address recipient, bool zeroForOne, uint amountIn) external;
+    
     function swapCallback(
         address payer,
         address recipient,
