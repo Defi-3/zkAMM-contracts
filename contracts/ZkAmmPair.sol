@@ -48,7 +48,7 @@ contract ZkAmmPair is IZkAmmPair, ERC20 {
         nextRequestId++;
         requestParams[nextRequestId] = abi.encode(msg.sender, recipient, amount0, amount1);
 
-        emit AddInitLiquidity(msg.sender, recipient, amount0, amount1, nextRequestId);
+        emit AddInitLiquidity(nextRequestId, amount0, amount1);
     }
 
     function addInitLiquidityCallback(
@@ -89,7 +89,7 @@ contract ZkAmmPair is IZkAmmPair, ERC20 {
         requestParams[nextRequestId] = abi.encode(msg.sender, recipient, amount0);
 
         uint256 _totalSupply = totalSupply();
-        emit AddLiquidity(msg.sender, recipient, amount0, reserve0, reserve1, _totalSupply, nextRequestId);
+        emit AddLiquidity(nextRequestId, amount0, reserve0, reserve1, _totalSupply);
     }
 
     function addLiquidityCallback(
@@ -126,7 +126,7 @@ contract ZkAmmPair is IZkAmmPair, ERC20 {
         requestParams[nextRequestId] = abi.encode(msg.sender, recipient, liquidity);
 
         uint256 _totalSupply = totalSupply();
-        emit RemoveLiquidity(msg.sender, recipient, liquidity, reserve0, reserve1, _totalSupply, nextRequestId);
+        emit RemoveLiquidity(nextRequestId, liquidity, reserve0, reserve1, _totalSupply);
     }
 
     function removeLiquidityCallback(
@@ -169,7 +169,7 @@ contract ZkAmmPair is IZkAmmPair, ERC20 {
         nextRequestId++;
         requestParams[nextRequestId] = abi.encode(msg.sender, recipient, zeroForOne, amountIn);
 
-        emit Swap(msg.sender, recipient, zeroForOne, amountIn, reserve0, reserve1, nextRequestId);
+        emit Swap(nextRequestId, amountIn, reserve0, reserve1, zeroForOne);
     }
 
     function swapCallback(

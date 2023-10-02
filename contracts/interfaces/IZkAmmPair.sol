@@ -4,38 +4,30 @@ pragma solidity ^0.8.10;
 interface IZkAmmPair {
     event Setup(address token0, address token1);
     event AddInitLiquidity(
-        address payer, 
-        address recipient, 
+        uint256 requestId,
         uint256 amount0, 
-        uint256 amount1,
-        uint256 requestId
+        uint256 amount1
     );
-    event AddLiquidity(
-        address payer, 
-        address recipient, 
+    event AddLiquidity( 
+        uint256 requestId,
         uint256 amount0, 
         uint256 reserve0, 
         uint256 reserve1, 
-        uint256 totalSupply,
-        uint256 requestId
+        uint256 totalSupply
     );
     event RemoveLiquidity(
-        address sender, 
-        address recipient, 
+        uint256 requestId,
         uint256 liquidity, 
         uint256 reserve0, 
         uint256 reserve1, 
-        uint256 totalSupply,
-        uint256 requestId
+        uint256 totalSupply
     );
     event Swap(
-        address payer, 
-        address recipient, 
-        bool zeroForOne, 
+        uint256 requestId,
         uint256 amountIn, 
         uint256 reserve0, 
         uint256 reserve1,
-        uint256 requestId
+        bool zeroForOne
     );
 
     event LiquidityAdded(
