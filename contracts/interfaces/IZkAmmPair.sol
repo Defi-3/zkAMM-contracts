@@ -7,7 +7,8 @@ interface IZkAmmPair {
         address payer, 
         address recipient, 
         uint256 amount0, 
-        uint256 amount1
+        uint256 amount1,
+        uint256 requestId
     );
     event AddLiquidity(
         address payer, 
@@ -15,16 +16,17 @@ interface IZkAmmPair {
         uint256 amount0, 
         uint256 reserve0, 
         uint256 reserve1, 
-        uint256 totalSupply
+        uint256 totalSupply,
+        uint256 requestId
     );
-
     event RemoveLiquidity(
         address sender, 
         address recipient, 
         uint256 liquidity, 
         uint256 reserve0, 
         uint256 reserve1, 
-        uint256 totalSupply
+        uint256 totalSupply,
+        uint256 requestId
     );
     event Swap(
         address payer, 
@@ -32,12 +34,34 @@ interface IZkAmmPair {
         bool zeroForOne, 
         uint256 amountIn, 
         uint256 reserve0, 
-        uint256 reserve1
+        uint256 reserve1,
+        uint256 requestId
     );
 
-    event LiquidityAdded(address payer, address recipient, uint amount0, uint amount1, uint liquidity);
-    event LiquidityRemoved(address sender, address recipient, uint liquidity, uint amount0, uint amount1);
-    event Swapped(address payer, address recipient, bool zeroForOne, uint amountIn, uint amountOut);
+    event LiquidityAdded(
+        address payer, 
+        address recipient, 
+        uint256 amount0, 
+        uint256 amount1, 
+        uint256 liquidity, 
+        uint256 requestId
+    );
+    event LiquidityRemoved(
+        address sender, 
+        address recipient, 
+        uint256 liquidity, 
+        uint256 amount0, 
+        uint256 amount1, 
+        uint256 requestId
+    );
+    event Swapped(
+        address payer, 
+        address recipient, 
+        bool zeroForOne, 
+        uint256 amountIn, 
+        uint256 amountOut, 
+        uint256 requestId
+    );
 
     function token0() external view returns (address);
     function token1() external view returns (address);
@@ -49,45 +73,35 @@ interface IZkAmmPair {
 
     function addInitLiquidity(
         address recipient, 
-        uint amount0, 
-        uint amount1
+        uint256 amount0, 
+        uint256 amount1
     ) external;
 
     function addInitLiquidityCallback(
-        address payer,
-        address recipient,
-        uint amount0,
-        uint amount1,
-        uint liquidity
+        uint256 requestId,
+        uint256 liquidity
     ) external;
 
-    function addLiquidity(address recipient, uint amount0) external;
+    function addLiquidity(address recipient, uint256 amount0) external;
 
     function addLiquidityCallback(
-        address payer,
-        address recipient,
-        uint amount0,
-        uint amount1,
-        uint liquidity
+        uint256 requestId,
+        uint256 amount1,
+        uint256 liquidity
     ) external;
 
-    function removeLiquidity(address recipient, uint liquidity) external;
+    function removeLiquidity(address recipient, uint256 liquidity) external;
 
     function removeLiquidityCallback(
-        address sender,
-        address recipient,
-        uint liquidity,
-        uint amount0,
-        uint amount1
+        uint256 requestId,
+        uint256 amount0,
+        uint256 amount1
     ) external;
 
-    function swap(address recipient, bool zeroForOne, uint amountIn) external;
+    function swap(address recipient, bool zeroForOne, uint256 amountIn) external;
     
     function swapCallback(
-        address payer,
-        address recipient,
-        bool zeroForOne,
-        uint amountIn,
-        uint amountOut
+        uint256 requestId,
+        uint256 amountOut
     ) external;
 }

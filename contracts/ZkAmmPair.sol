@@ -10,8 +10,11 @@ contract ZkAmmPair is IZkAmmPair, ERC20 {
     address public immutable token1;
     address public zkGraph;
 
-    uint public reserve0;
-    uint public reserve1;
+    uint256 public reserve0;
+    uint256 public reserve1;
+    uint256 public nextRequestId;
+    mapping(uint256 => bytes) public requestParams;
+
 
     modifier onlyZkGraph() {
         require(msg.sender == zkGraph, "only zkGraph");
@@ -31,27 +34,33 @@ contract ZkAmmPair is IZkAmmPair, ERC20 {
 
     function addInitLiquidity(
         address recipient, 
-        uint amount0, 
-        uint amount1
+        uint256 amount0, 
+        uint256 amount1
     ) external override {
         require(recipient != address(0), "zero address");
         require(amount0 > 0 && amount1 > 0, "zero amount");
         require(reserve0 == 0 && reserve1 == 0, "already init");
 
-        uint balance0 = IERC20(token0).balanceOf(msg.sender);
-        uint balance1 = IERC20(token1).balanceOf(msg.sender);
+        uint256 balance0 = IERC20(token0).balanceOf(msg.sender);
+        uint256 balance1 = IERC20(token1).balanceOf(msg.sender);
         require(balance0 >= amount0 && balance1 >= amount1, "not enough balance");
 
-        emit AddInitLiquidity(msg.sender, recipient, amount0, amount1);
+        nextRequestId++;
+        requestParams[nextRequestId] = abi.encode(msg.sender, recipient, amount0, amount1);
+
+        emit AddInitLiquidity(msg.sender, recipient, amount0, amount1, nextRequestId);
     }
 
     function addInitLiquidityCallback(
-        address payer,
-        address recipient,
-        uint amount0, 
-        uint amount1,
-        uint liquidity
+        uint256 requestId,
+        uint256 liquidity
     ) external override onlyZkGraph {
+        (
+            address payer, 
+            address recipient, 
+            uint256 amount0, 
+            uint256 amount1
+        ) = abi.decode(requestParams[requestId], (address, address, uint256, uint256));
         require(payer != address(0) && recipient != address(0), "zero address");
         require(amount0 > 0 && amount1 > 0, "zero amount");
         require(liquidity > 0, "zero liquidity");
@@ -64,28 +73,35 @@ contract ZkAmmPair is IZkAmmPair, ERC20 {
         reserve1 = amount1;
 
         _mint(recipient, liquidity);
-        emit LiquidityAdded(payer, recipient, amount0, amount1, liquidity);
+        emit LiquidityAdded(payer, recipient, amount0, amount1, liquidity, requestId);
+        delete requestParams[requestId];
     }
 
-    function addLiquidity(address recipient, uint amount0) external override {
+    function addLiquidity(address recipient, uint256 amount0) external override {
         require(recipient != address(0), "zero address");
         require(amount0 > 0, "zero amount");
         require(reserve0 > 0 && reserve1 > 0, "not init");
 
-        uint balance0 = IERC20(token0).balanceOf(msg.sender);
+        uint256 balance0 = IERC20(token0).balanceOf(msg.sender);
         require(balance0 >= amount0, "not enough balance");
 
-        uint _totalSupply = totalSupply();
-        emit AddLiquidity(msg.sender, recipient, amount0, reserve0, reserve1, _totalSupply);
+        nextRequestId++;
+        requestParams[nextRequestId] = abi.encode(msg.sender, recipient, amount0);
+
+        uint256 _totalSupply = totalSupply();
+        emit AddLiquidity(msg.sender, recipient, amount0, reserve0, reserve1, _totalSupply, nextRequestId);
     }
 
     function addLiquidityCallback(
-        address payer,
-        address recipient,
-        uint amount0,
-        uint amount1,
-        uint liquidity
+        uint256 requestId,
+        uint256 amount1,
+        uint256 liquidity
     ) external override onlyZkGraph {
+        (
+            address payer, 
+            address recipient, 
+            uint256 amount0
+        ) = abi.decode(requestParams[requestId], (address, address, uint256));
         require(payer != address(0) && recipient != address(0), "zero address");
         require(amount0 > 0 && amount1 > 0, "zero amount");
         require(liquidity > 0, "zero liquidity");
@@ -98,23 +114,31 @@ contract ZkAmmPair is IZkAmmPair, ERC20 {
         reserve1 += amount1;
 
         _mint(recipient, liquidity);
-        emit LiquidityAdded(payer, recipient, amount0, amount1, liquidity);
+        emit LiquidityAdded(payer, recipient, amount0, amount1, liquidity, requestId);
+        delete requestParams[requestId];
     }
 
     function removeLiquidity(address recipient, uint liquidity) external override {
         require(recipient != address(0), "zero address");
         require(balanceOf(msg.sender) >= liquidity, "insufficient liquidity");
-        uint _totalSupply = totalSupply();
-        emit RemoveLiquidity(msg.sender, recipient, liquidity, reserve0, reserve1, _totalSupply);
+
+        nextRequestId++;
+        requestParams[nextRequestId] = abi.encode(msg.sender, recipient, liquidity);
+
+        uint256 _totalSupply = totalSupply();
+        emit RemoveLiquidity(msg.sender, recipient, liquidity, reserve0, reserve1, _totalSupply, nextRequestId);
     }
 
     function removeLiquidityCallback(
-        address sender,
-        address recipient,
-        uint liquidity,
-        uint amount0,
-        uint amount1
+        uint256 requestId,
+        uint256 amount0,
+        uint256 amount1
     ) external override onlyZkGraph {
+        (
+            address sender, 
+            address recipient, 
+            uint256 liquidity
+        ) = abi.decode(requestParams[requestId], (address, address, uint256));
         require(sender != address(0) && recipient != address(0), "zero address");
         require(liquidity > 0, "zero liquidity");
         require(amount0 > 0 && amount1 > 0, "zero amount");
@@ -126,14 +150,15 @@ contract ZkAmmPair is IZkAmmPair, ERC20 {
 
         TransferHelper.safeTransfer(token0, recipient, amount0);
         TransferHelper.safeTransfer(token1, recipient, amount1);
-        emit LiquidityRemoved(sender, recipient, liquidity, amount0, amount1);
+        emit LiquidityRemoved(sender, recipient, liquidity, amount0, amount1, requestId);
+        delete requestParams[requestId];
     }
 
-    function swap(address recipient, bool zeroForOne, uint amountIn) external override {
+    function swap(address recipient, bool zeroForOne, uint256 amountIn) external override {
         require(recipient != address(0), "zero address");
         require(amountIn > 0, "zero amountIn");
 
-        uint balance;
+        uint256 balance;
         if (zeroForOne) {
             balance = IERC20(token0).balanceOf(msg.sender);
         } else {
@@ -141,16 +166,22 @@ contract ZkAmmPair is IZkAmmPair, ERC20 {
         }
         require(balance >= amountIn, "not enough balance");
 
-        emit Swap(msg.sender, recipient, zeroForOne, amountIn, reserve0, reserve1);
+        nextRequestId++;
+        requestParams[nextRequestId] = abi.encode(msg.sender, recipient, zeroForOne, amountIn);
+
+        emit Swap(msg.sender, recipient, zeroForOne, amountIn, reserve0, reserve1, nextRequestId);
     }
 
     function swapCallback(
-        address payer,
-        address recipient,
-        bool zeroForOne,
-        uint amountIn,
-        uint amountOut
+        uint256 requestId,
+        uint256 amountOut
     ) external override onlyZkGraph {
+        (
+            address payer, 
+            address recipient, 
+            bool zeroForOne,
+            uint256 amountIn
+        ) = abi.decode(requestParams[requestId], (address, address, bool, uint256));
         require(payer != address(0) && recipient != address(0), "zero address");
 
         address tokenIn;
@@ -171,6 +202,7 @@ contract ZkAmmPair is IZkAmmPair, ERC20 {
         TransferHelper.safeTransferFrom(tokenIn, payer, address(this), amountIn);
         TransferHelper.safeTransfer(tokenOut, recipient, amountOut);
 
-        emit Swapped(payer, recipient, zeroForOne, amountIn, amountOut);
+        emit Swapped(payer, recipient, zeroForOne, amountIn, amountOut, requestId);
+        delete requestParams[requestId];
     }
 }
